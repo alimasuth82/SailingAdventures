@@ -1,0 +1,71 @@
+Procedure for sailor.js:
+
+DELIMITER //
+
+CREATE PROCEDURE InsertSailor(
+    -- Input parameters
+    IN p_S_name VARCHAR(50),
+    IN p_B_date DATE,
+    IN p_Rate INT,
+
+    -- Output parameter
+    OUT p_Message VARCHAR(100)
+)
+BEGIN
+    DECLARE v_Age INT;
+    DECLARE v_CurDate DATE;
+    
+    -- Set the current date
+    SET v_CurDate = CURDATE();
+
+    -- Calculate the age of the sailor
+    SET v_Age = TIMESTAMPDIFF(YEAR, p_B_date, v_CurDate);
+    
+    -- Check if the sailor is at least 24 years old
+    IF v_Age >= 24 THEN
+        INSERT INTO Sailor (S_name, B_date, Rate) VALUES (p_S_name, p_B_date, p_Rate);
+        SET p_Message = 'Sailor added';
+    ELSE
+        SET p_Message = 'Sailor age is below allowed age';
+    END IF;
+END //
+
+DELIMITER;
+
+
+Procedure for reserves.js:
+
+DELIMITER //
+
+CREATE PROCEDURE InsertReservation(
+    -- Input parameters
+    IN p_S_Id INT,
+    IN p_B_Id INT,
+    IN p_Day DATE,
+
+    -- Output parameter
+    OUT p_Message VARCHAR(100)
+)
+BEGIN
+    DECLARE v_Rate INT;
+    DECLARE v_BoatType VARCHAR(50);
+
+    -- Get the sailor's rate
+    SELECT Rate INTO v_Rate FROM Sailor WHERE S_Id = p_S_Id;
+    
+    -- Get the boat type
+    SELECT B_type INTO v_BoatType FROM Boat WHERE B_Id = p_B_Id;
+
+    -- Check business logic conditions
+    IF v_BoatType = 'Fishing vessel' AND v_Rate <= 7 THEN
+        SET p_Message = 'Reservation cannot be done for requested boat - Sailor rate is low';
+    ELSEIF v_BoatType = 'Sailboat' AND v_Rate <= 5 THEN
+        SET p_Message = 'Reservation cannot be done for requested boat - Sailor rate is low';
+    ELSEIF v_Rate <= 2 AND v_BoatType != 'Bass boat' THEN
+        SET p_Message = 'Reservation cannot be done for requested boat - Sailor rate is low';
+    ELSE
+        INSERT INTO Reserves (S_Id, B_Id, Day) VALUES (p_S_Id, p_B_Id, p_Day);
+        SET p_Message = 'Reservation added';
+    END IF;
+END //
+DELIMITER;
